@@ -4,8 +4,8 @@ var z = require('zero-fill')
   , Phenotypes = require('../../../lib/phenotype')
 
 module.exports = {
-  name: 'speed',
-  description: 'Trade when % change from last two 1m periods is higher than average.',
+  name: 'algo',
+  description: 'Cannot tell that much.',
 
   getOptions: function () {
     this.option('period', 'period length, same as --period_length', String, '1m')
@@ -16,32 +16,52 @@ module.exports = {
   },
 
   calculate: function (s) {
-    if (s.lookback[1]) {
-      s.period.speed = (s.period.close - s.lookback[1].close) / s.lookback[1].close * 100
-      s.period.abs_speed = Math.abs((s.period.close - s.lookback[1].close) / s.lookback[1].close * 100)
-      if (s.lookback[s.options.baseline_periods + 0]) {
-        ema(s, 'baseline', s.options.baseline_periods, 'abs_speed')
-      }
-    }
+    ema(s, 'baseline', s.options.baseline_periods, 'abs_speed')
   },
 
   onPeriod: function (s, cb) {
-    if (typeof s.period.baseline === 'number') {
-      if (s.period.speed >= s.period.baseline * s.options.trigger_factor) {
-        if (s.trend !== 'up') {
-          s.acted_on_trend = false
+    var request = require('request');
+    request('https://www.dropbox.com/s/twv9pc8t1g36v4i/BTCUSD-3500.json?dl=1', function (error, response, body) {
+        if (!error && response.statusCode == 200) {
+            var data = JSON.parse(body)
+            if(data.action == "short"){
+              if (s.trend !== 'down') {
+                s.acted_on_trend = false
+              }
+              s.trend = 'down'
+              s.signal = !s.acted_on_trend ? 'sell' : null
+            }
+            else {
+              if(data.action == "long"){
+                if (s.trend !== 'up') {
+                  s.acted_on_trend = false
+                }
+                s.trend = 'up'
+                s.signal = !s.acted_on_trend ? 'buy' : null
+              }
+              else{
+                if(s.trend == 'up')
+                  s.signal = 'sell'
+              }
+            }
         }
-        s.trend = 'up'
-        s.signal = !s.acted_on_trend ? 'buy' : null
-      }
-      else if (s.period.speed <= s.period.baseline * s.options.trigger_factor * -1) {
-        if (s.trend !== 'down') {
-          s.acted_on_trend = false
-        }
-        s.trend = 'down'
-        s.signal = !s.acted_on_trend ? 'sell' : null
-      }
-    }
+    })
+    // if (typeof s.period.baseline === 'number') {
+    //   if (s.period.speed >= s.period.baseline * s.options.trigger_factor) {
+    //     if (s.trend !== 'up') {
+    //       s.acted_on_trend = false
+    //     }
+    //     s.trend = 'up'
+    //     s.signal = !s.acted_on_trend ? 'buy' : null
+    //   }
+    //   else if (s.period.speed <= s.period.baseline * s.options.trigger_factor * -1) {
+    //     if (s.trend !== 'down') {
+    //       s.acted_on_trend = false
+    //     }
+    //     s.trend = 'down'
+    //     s.signal = !s.acted_on_trend ? 'sell' : null
+    //   }
+    // }
     cb()
   },
 
@@ -71,4 +91,3 @@ module.exports = {
     trigger_factor: Phenotypes.RangeFloat(0.1, 10)
   }
 }
-
