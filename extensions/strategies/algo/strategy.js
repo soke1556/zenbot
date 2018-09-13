@@ -5,9 +5,12 @@ var z = require('zero-fill')
 
 module.exports = {
   name: 'algo',
-  description: 'Cannot tell that much.',
+  description: 'Cannot tell much.',
 
   getOptions: function () {
+    this.option('pair', 'Pair name as expected by algo api. Default: BTCUSD', String, 'BTCUSD')
+    this.option('ticks', 'Ticks sizeas expected by algo api. Default: 3500', Number, 3500)
+
     this.option('period', 'period length, same as --period_length', String, '1m')
     this.option('period_length', 'period length, same as --period', String, '1m')
     this.option('min_periods', 'min. number of history periods', Number, 3000)
@@ -20,31 +23,37 @@ module.exports = {
   },
 
   onPeriod: function (s, cb) {
-    var request = require('request');
-    request('https://www.dropbox.com/s/twv9pc8t1g36v4i/BTCUSD-3500.json?dl=1', function (error, response, body) {
-        if (!error && response.statusCode == 200) {
-            var data = JSON.parse(body)
-            if(data.action == "short"){
-              if (s.trend !== 'down') {
-                s.acted_on_trend = false
-              }
-              s.trend = 'down'
-              s.signal = !s.acted_on_trend ? 'sell' : null
-            }
-            else {
-              if(data.action == "long"){
-                if (s.trend !== 'up') {
-                  s.acted_on_trend = false
-                }
-                s.trend = 'up'
-                s.signal = !s.acted_on_trend ? 'buy' : null
-              }
-              else{
-                if(s.trend == 'up')
-                  s.signal = 'sell'
-              }
-            }
+    var request = require('request')
+    
+    // This async gets and prints the current balance as follows: { asset: 0, currency: 1000, asset_hold: 0, currency_hold: 0 }
+    // s.exchange.getBalance({currency: s.currency, asset: s.asset}, function (err, balance) {
+    //   console.log(balance)
+    // })
+
+    request('https://www.dropbox.com/s/twv9pc8t1g36v4i/' + s.options.pair.toUpperCase() + '-' + s.options.ticks + '.json?dl=1', function (error, response, body) {
+      if (!error && response.statusCode == 200) {
+        var data = JSON.parse(body)
+        if(data.action == 'short'){
+          if (s.trend !== 'down') {
+            s.acted_on_trend = false
+          }
+          s.trend = 'down'
+          s.signal = !s.acted_on_trend ? 'sell' : null
         }
+        else {
+          if(data.action == 'long'){
+            if (s.trend !== 'up') {
+              s.acted_on_trend = false
+            }
+            s.trend = 'up'
+            s.signal = !s.acted_on_trend ? 'buy' : null
+          }
+          else{
+            if(s.trend == 'up')
+              s.signal = 'sell'
+          }
+        }
+      }
     })
     // if (typeof s.period.baseline === 'number') {
     //   if (s.period.speed >= s.period.baseline * s.options.trigger_factor) {
