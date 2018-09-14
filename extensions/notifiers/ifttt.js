@@ -3,6 +3,8 @@ var request = require('request')
 module.exports = function ifttt (config) {
   var ifttt = {
     pushMessage: function(title, message) {
+      if(!config.on){ return }
+
       var postData = {'value1': title , 'value2': message }
 
       function callback(error) {

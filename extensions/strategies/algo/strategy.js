@@ -3,6 +3,7 @@ var z = require('zero-fill')
   , ema = require('../../../lib/ema')
   , Phenotypes = require('../../../lib/phenotype')
   // , slack = require('../../../extensions/notifiers/slack')
+  // , ifttt = require('../../../extensions/notifiers/ifttt')
   // , conf = require('../../../conf')
 
 module.exports = {
@@ -57,6 +58,7 @@ module.exports = {
         }
         // This is how to send notifications to Slack.
         //slack(conf).pushMessage('zenbot trade', '*' + s.options.pair.toUpperCase() + '* at *' + s.options.ticks + '*')
+        // ifttt(conf.notifiers.ifttt).pushMessage('zenbot trade', '*' + s.options.pair.toUpperCase() + '* at *' + s.options.ticks + '*')
       }
     })
     // if (typeof s.period.baseline === 'number') {
