@@ -2,6 +2,8 @@ var z = require('zero-fill')
   , n = require('numbro')
   , ema = require('../../../lib/ema')
   , Phenotypes = require('../../../lib/phenotype')
+  // , slack = require('../../../extensions/notifiers/slack')
+  // , conf = require('../../../conf')
 
 module.exports = {
   name: 'algo',
@@ -53,6 +55,8 @@ module.exports = {
               s.signal = 'sell'
           }
         }
+        // This is how to send notifications to Slack.
+        //slack(conf).pushMessage('zenbot trade', '*' + s.options.pair.toUpperCase() + '* at *' + s.options.ticks + '*')
       }
     })
     // if (typeof s.period.baseline === 'number') {
